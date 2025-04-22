@@ -1,3 +1,175 @@
+
+
+
+
+#include <iostream>
+#include <vector>
+#include <unordered_map>
+#include <algorithm>
+using namespace std;
+
+void fifo(const vector<int>& pages, int frames) {
+    vector<int> memory;
+    int pageFaults = 0;
+
+    for (int page : pages) {
+        if (find(memory.begin(), memory.end(), page) == memory.end()) {
+            if (memory.size() == frames) memory.erase(memory.begin());
+            memory.push_back(page);
+            pageFaults++;
+        }
+
+        cout << "Page " << page << " -> [";
+        for (int i = 0; i < memory.size(); i++) {
+            cout << memory[i];
+            if (i != memory.size() - 1) cout << ", ";
+        }
+        cout << "]\n";
+    }
+
+    int hits = pages.size() - pageFaults;
+    cout << "Total Page Faults (FIFO): " << pageFaults << "\n";
+    cout << "Total Page Hits (FIFO): " << hits << "\n";
+    cout << "Page Fault Ratio: " << (float)pageFaults / pages.size() << "\n";
+    cout << "Page Hit Ratio: " << (float)hits / pages.size() << "\n";
+}
+
+void lru(const vector<int>& pages, int frames) {
+    vector<int> memory;
+    unordered_map<int, int> lastUsed;
+    int pageFaults = 0;
+
+    for (int i = 0; i < pages.size(); i++) {
+        int page = pages[i];
+
+        if (find(memory.begin(), memory.end(), page) == memory.end()) {
+            if (memory.size() < frames) {
+                memory.push_back(page);
+            } else {
+                int lruPage = memory[0], lruTime = lastUsed[lruPage];
+                for (int m : memory) {
+                    if (lastUsed[m] < lruTime) {
+                        lruPage = m;
+                        lruTime = lastUsed[m];
+                    }
+                }
+                replace(memory.begin(), memory.end(), lruPage, page);
+            }
+            pageFaults++;
+        }
+
+        lastUsed[page] = i;
+
+        cout << "Page " << page << " -> [";
+        for (int j = 0; j < frames; j++) {
+            if (j < memory.size())
+                cout << memory[j];
+            else
+                cout << "-";
+            if (j != frames - 1) cout << ", ";
+        }
+        cout << "]\n";
+    }
+
+    int hits = pages.size() - pageFaults;
+    cout << "Total Page Faults (LRU): " << pageFaults << "\n";
+    cout << "Total Page Hits (LRU): " << hits << "\n";
+    cout << "Page Fault Ratio: " << (float)pageFaults / pages.size() << "\n";
+    cout << "Page Hit Ratio: " << (float)hits / pages.size() << "\n";
+}
+
+void optimal(const vector<int>& pages, int frames) {
+    vector<int> memory;
+    int pageFaults = 0;
+
+    for (int i = 0; i < pages.size(); i++) {
+        int page = pages[i];
+
+        if (find(memory.begin(), memory.end(), page) == memory.end()) {
+            if (memory.size() < frames) {
+                memory.push_back(page);
+            } else {
+                int indexToReplace = -1, farthest = i;
+                for (int j = 0; j < memory.size(); j++) {
+                    int nextUse = -1;
+                    for (int k = i + 1; k < pages.size(); k++) {
+                        if (pages[k] == memory[j]) {
+                            nextUse = k;
+                            break;
+                        }
+                    }
+                    if (nextUse == -1) {
+                        indexToReplace = j;
+                        break;
+                    }
+                    if (nextUse > farthest) {
+                        farthest = nextUse;
+                        indexToReplace = j;
+                    }
+                }
+                memory[indexToReplace] = page;
+            }
+            pageFaults++;
+        }
+
+        cout << "Page " << page << " -> [";
+        for (int j = 0; j < frames; j++) {
+            if (j < memory.size())
+                cout << memory[j];
+            else
+                cout << "-";
+            if (j != frames - 1) cout << ", ";
+        }
+        cout << "]\n";
+    }
+
+    int hits = pages.size() - pageFaults;
+    cout << "Total Page Faults (Optimal): " << pageFaults << "\n";
+    cout << "Total Page Hits (Optimal): " << hits << "\n";
+    cout << "Page Fault Ratio: " << (float)pageFaults / pages.size() << "\n";
+    cout << "Page Hit Ratio: " << (float)hits / pages.size() << "\n";
+}
+
+int main() {
+    int n, frames, choice;
+    vector<int> pages;
+
+    cout << "Enter number of page references: ";
+    cin >> n;
+
+    cout << "Enter page reference string:\n";
+    for (int i = 0; i < n; i++) {
+        int page;
+        cin >> page;
+        pages.push_back(page);
+    }
+
+    cout << "Enter number of frames: ";
+    cin >> frames;
+
+    do {
+        cout << "\nPage Replacement Menu:\n";
+        cout << "1. FIFO\n2. LRU\n3. Optimal\n4. Exit\n";
+        cout << "Enter your choice: ";
+        cin >> choice;
+
+        switch (choice) {
+            case 1: fifo(pages, frames); break;
+            case 2: lru(pages, frames); break;
+            case 3: optimal(pages, frames); break;
+            case 4: cout << "Exiting...\n"; break;
+            default: cout << "Invalid choice. Try again.\n";
+        }
+
+    } while (choice != 4);
+
+    return 0;
+}
+
+
+
+
+-----------------------------
 #include <stdio.h>
 #include <stdlib.h>
 
