@@ -1,0 +1,142 @@
+# With  Synchronizatioon 
+#include <stdio.h>
+#include <pthread.h>
+#include <semaphore.h>
+#include <unistd.h>
+
+sem_t rw_mutex;  // Controls access to the resource (for writers)
+pthread_mutex_t mutex; // Controls access to read_count variable
+int read_count = 0;  // Number of active readers
+int shared_data = 0; // Shared resource
+
+void *reader(void *arg) {
+    int id = *((int *)arg);
+
+    while (1) {
+        pthread_mutex_lock(&mutex);
+        read_count++;
+        if (read_count == 1) {
+            sem_wait(&rw_mutex);  // First reader locks the resource
+        }
+        pthread_mutex_unlock(&mutex);
+
+        // Reading the shared resource
+        printf("Reader %d is reading. Shared Data = %d\n", id, shared_data);
+        sleep(1);  // Simulating reading time
+
+        pthread_mutex_lock(&mutex);
+        read_count--;
+        if (read_count == 0) {
+            sem_post(&rw_mutex);  // Last reader unlocks the resource
+        }
+        pthread_mutex_unlock(&mutex);
+        
+        sleep(1); // Simulate time before reading again
+    }
+}
+
+void *writer(void *arg) {
+    int id = *((int *)arg);
+
+    while (1) {
+        sem_wait(&rw_mutex);  // Only one writer can enter
+
+        // Writing to the shared resource
+        shared_data++;
+        printf("Writer %d is writing. Shared Data updated to %d\n", id, shared_data);
+        sleep(2);  // Simulating writing time
+
+        sem_post(&rw_mutex);  // Unlock the resource
+        
+        sleep(2); // Simulate time before writing again
+    }
+}
+
+int main() {
+    pthread_t r_threads[3], w_threads[2];
+    int r_ids[3] = {1, 2, 3};
+    int w_ids[2] = {1, 2};
+
+    // Initialize mutex and semaphore
+    sem_init(&rw_mutex, 0, 1);
+    pthread_mutex_init(&mutex, NULL);
+
+    // Create reader threads
+    for (int i = 0; i < 3; i++) {
+        pthread_create(&r_threads[i], NULL, reader, &r_ids[i]);
+    }
+
+    // Create writer threads
+    for (int i = 0; i < 2; i++) {
+        pthread_create(&w_threads[i], NULL, writer, &w_ids[i]);
+    }
+
+    // Join threads (not necessary since it's an infinite loop)
+    for (int i = 0; i < 3; i++) {
+        pthread_join(r_threads[i], NULL);
+    }
+    for (int i = 0; i < 2; i++) {
+        pthread_join(w_threads[i], NULL);
+    }
+
+    // Destroy mutex and semaphore
+    pthread_mutex_destroy(&mutex);
+    sem_destroy(&rw_mutex);
+
+    return 0;
+}
+
+# Without Sunchronization 
+#include <stdio.h>
+#include <pthread.h>
+#include <unistd.h>
+
+int shared_data = 0; // Shared resource
+
+void *reader(void *arg) {
+    int id = *((int *)arg);
+
+    while (1) {
+        // Readers access the shared resource without synchronization
+        printf("Reader %d is reading. Shared Data = %d (UNSAFE)\n", id, shared_data);
+        sleep(1); // Simulate reading time
+    }
+}
+
+void *writer(void *arg) {
+    int id = *((int *)arg);
+
+    while (1) {
+        // Writers update the shared resource without synchronization
+        shared_data++;
+        printf("Writer %d is writing. Shared Data updated to %d (UNSAFE)\n", id, shared_data);
+        sleep(2); // Simulate writing time
+    }
+}
+
+int main() {
+    pthread_t r_threads[3], w_threads[2];
+    int r_ids[3] = {1, 2, 3};
+    int w_ids[2] = {1, 2};
+
+    // Create reader threads
+    for (int i = 0; i < 3; i++) {
+        pthread_create(&r_threads[i], NULL, reader, &r_ids[i]);
+    }
+
+    // Create writer threads
+    for (int i = 0; i < 2; i++) {
+        pthread_create(&w_threads[i], NULL, writer, &w_ids[i]);
+    }
+
+    // Join threads (not necessary since it's an infinite loop)
+    for (int i = 0; i < 3; i++) {
+        pthread_join(r_threads[i], NULL);
+    }
+    for (int i = 0; i < 2; i++) {
+        pthread_join(w_threads[i], NULL);
+    }
+
+    return 0;
+}
+
