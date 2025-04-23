@@ -1,3 +1,210 @@
+#include <iostream>
+#include <vector>
+
+using namespace std;
+
+void bankersAlgorithm();
+void request();
+
+void bankersAlgorithm() {
+    int n, m;
+    cout << "Enter the number of processes: ";
+    cin >> n;
+    cout << "Enter the number of resources: ";
+    cin >> m;
+
+    vector<vector<int>> alloc(n, vector<int>(m));
+    vector<vector<int>> max(n, vector<int>(m));
+    vector<int> avail(m);
+
+    cout << "Enter allocation Matrix (" << n << " x " << m << "):\n";
+    for (int i = 0; i < n; ++i)
+        for (int j = 0; j < m; ++j)
+            cin >> alloc[i][j];
+
+    cout << "Enter MAX Matrix (" << n << " x " << m << "):\n";
+    for (int i = 0; i < n; ++i)
+        for (int j = 0; j < m; ++j)
+            cin >> max[i][j];
+
+    cout << "Enter Available Resources (" << m << " values):\n";
+    for (int i = 0; i < m; ++i)
+        cin >> avail[i];
+
+    vector<vector<int>> need(n, vector<int>(m));
+    vector<int> f(n, 0), ans(n);
+    int ind = 0;
+
+    for (int i = 0; i < n; ++i)
+        for (int j = 0; j < m; ++j)
+            need[i][j] = max[i][j] - alloc[i][j];
+
+    for (int k = 0; k < n; ++k) {
+        for (int i = 0; i < n; ++i) {
+            if (!f[i]) {
+                bool flag = true;
+                for (int j = 0; j < m; ++j) {
+                    if (need[i][j] > avail[j]) {
+                        flag = false;
+                        break;
+                    }
+                }
+                if (flag) {
+                    ans[ind++] = i;
+                    for (int y = 0; y < m; ++y)
+                        avail[y] += alloc[i][y];
+                    f[i] = 1;
+                }
+            }
+        }
+    }
+
+    bool safe = true;
+    for (int i = 0; i < n; ++i) {
+        if (!f[i]) {
+            safe = false;
+            cout << "The system is not in a safe state.\n";
+            return;
+        }
+    }
+
+    if (safe) {
+        cout << "Following is the SAFE Sequence:\n";
+        for (int i = 0; i < n - 1; ++i)
+            cout << " P" << ans[i] << " ->";
+        cout << " P" << ans[n - 1] << "\n";
+    }
+}
+
+void request() {
+    int n, m;
+    cout << "Enter the number of processes: ";
+    cin >> n;
+    cout << "Enter the number of resources: ";
+    cin >> m;
+
+    vector<vector<int>> alloc(n, vector<int>(m));
+    vector<vector<int>> max(n, vector<int>(m));
+    vector<int> avail(m);
+
+    cout << "Enter allocation Matrix (" << n << " x " << m << "):\n";
+    for (int i = 0; i < n; ++i)
+        for (int j = 0; j < m; ++j)
+            cin >> alloc[i][j];
+
+    cout << "Enter MAX Matrix (" << n << " x " << m << "):\n";
+    for (int i = 0; i < n; ++i)
+        for (int j = 0; j < m; ++j)
+            cin >> max[i][j];
+
+    cout << "Enter Available Resources (" << m << " values):\n";
+    for (int i = 0; i < m; ++i)
+        cin >> avail[i];
+
+    vector<vector<int>> need(n, vector<int>(m));
+    for (int i = 0; i < n; ++i)
+        for (int j = 0; j < m; ++j)
+            need[i][j] = max[i][j] - alloc[i][j];
+
+    int process;
+    cout << "Enter process number (0 to " << n - 1 << ") making the request: ";
+    cin >> process;
+
+    vector<int> req(m);
+    cout << "Enter resource request for P" << process << ": ";
+    for (int i = 0; i < m; ++i)
+        cin >> req[i];
+
+    for (int i = 0; i < m; ++i) {
+        if (req[i] > need[process][i]) {
+            cout << "\nProcess P" << process << " requested more than its maximum need. Request denied.\n";
+            return;
+        }
+        if (req[i] > avail[i]) {
+            cout << "\nNot enough resources available. Request denied.\n";
+            return;
+        }
+    }
+
+    for (int i = 0; i < m; ++i) {
+        avail[i] -= req[i];
+        alloc[process][i] += req[i];
+        need[process][i] -= req[i];
+    }
+
+    vector<int> f(n, 0), ans(n);
+    int ind = 0;
+
+    for (int k = 0; k < n; ++k) {
+        for (int i = 0; i < n; ++i) {
+            if (!f[i]) {
+                bool flag = true;
+                for (int j = 0; j < m; ++j) {
+                    if (need[i][j] > avail[j]) {
+                        flag = false;
+                        break;
+                    }
+                }
+                if (flag) {
+                    ans[ind++] = i;
+                    for (int y = 0; y < m; ++y)
+                        avail[y] += alloc[i][y];
+                    f[i] = 1;
+                }
+            }
+        }
+    }
+
+    bool safe = true;
+    for (int i = 0; i < n; ++i) {
+        if (!f[i]) {
+            safe = false;
+            cout << "\nThe request leads to an unsafe state. Request denied.\n";
+            return;
+        }
+    }
+
+    cout << "\nThe request is granted. System remains in a SAFE state.\nSafe Sequence: ";
+    for (int i = 0; i < n - 1; ++i)
+        cout << " P" << ans[i] << " ->";
+    cout << " P" << ans[n - 1] << "\n";
+}
+
+int main() {
+    int choice;
+    bool run = true;
+    while (run) {
+        cout << "\nEnter which Algorithm you want to apply\n";
+        cout << "1. SAFE\n2. REQUEST\n3. Exit\n";
+        cin >> choice;
+
+        switch (choice) {
+            case 1:
+                bankersAlgorithm();
+                break;
+            case 2:
+                request();
+                break;
+            case 3:
+                run = false;
+                break;
+            default:
+                cout << "Invalid choice\n";
+                break;
+        }
+    }
+    return 0;
+}
+
+
+
+
+
+
+
+
+
+--------------------
 #include <stdio.h>
 #include <stdlib.h>
 
