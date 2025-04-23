@@ -1,3 +1,144 @@
+#include <iostream>
+#include <vector>
+#include <limits>
+using namespace std;
+
+// Function to display the memory allocation
+void displayAllocation(const vector<int>& allocation, const vector<int>& processSize) {
+    cout << "\nProcess No.\tProcess Size\tBlock No.\n";
+    for (size_t i = 0; i < processSize.size(); ++i) {
+        cout << " " << i + 1 << "\t\t" << processSize[i] << "\t\t";
+        if (allocation[i] != -1)
+            cout << allocation[i] + 1;
+        else
+            cout << "Not Allocated";
+        cout << endl;
+    }
+}
+
+// First Fit
+void firstFit(vector<int> blockSize, int m, vector<int> processSize, int n) {
+    vector<int> allocation(n, -1);
+    for (int i = 0; i < n; ++i) {
+        for (int j = 0; j < m; ++j) {
+            if (blockSize[j] >= processSize[i]) {
+                allocation[i] = j;
+                blockSize[j] -= processSize[i];
+                break;
+            }
+        }
+    }
+    displayAllocation(allocation, processSize);
+}
+
+// Best Fit
+void bestFit(vector<int> blockSize, int m, vector<int> processSize, int n) {
+    vector<int> allocation(n, -1);
+    for (int i = 0; i < n; ++i) {
+        int bestIdx = -1, minDiff = numeric_limits<int>::max();
+        for (int j = 0; j < m; ++j) {
+            if (blockSize[j] >= processSize[i] && (blockSize[j] - processSize[i] < minDiff)) {
+                minDiff = blockSize[j] - processSize[i];
+                bestIdx = j;
+            }
+        }
+        if (bestIdx != -1) {
+            allocation[i] = bestIdx;
+            blockSize[bestIdx] -= processSize[i];
+        }
+    }
+    displayAllocation(allocation, processSize);
+}
+
+// Next Fit
+void nextFit(vector<int> blockSize, int m, vector<int> processSize, int n) {
+    vector<int> allocation(n, -1);
+    int lastAllocated = 0;
+    for (int i = 0; i < n; ++i) {
+        int j = lastAllocated, count = 0;
+        while (count < m) {
+            if (blockSize[j] >= processSize[i]) {
+                allocation[i] = j;
+                blockSize[j] -= processSize[i];
+                lastAllocated = j;
+                break;
+            }
+            j = (j + 1) % m;
+            ++count;
+        }
+    }
+    displayAllocation(allocation, processSize);
+}
+
+// Worst Fit
+void worstFit(vector<int> blockSize, int m, vector<int> processSize, int n) {
+    vector<int> allocation(n, -1);
+    for (int i = 0; i < n; ++i) {
+        int worstIdx = -1, maxDiff = numeric_limits<int>::min();
+        for (int j = 0; j < m; ++j) {
+            if (blockSize[j] >= processSize[i] && (blockSize[j] - processSize[i] > maxDiff)) {
+                maxDiff = blockSize[j] - processSize[i];
+                worstIdx = j;
+            }
+        }
+        if (worstIdx != -1) {
+            allocation[i] = worstIdx;
+            blockSize[worstIdx] -= processSize[i];
+        }
+    }
+    displayAllocation(allocation, processSize);
+}
+
+int main() {
+    int m, n, choice;
+    cout << "Enter number of blocks: ";
+    cin >> m;
+    vector<int> blockSize(m);
+    cout << "Enter block sizes:\n";
+    for (int i = 0; i < m; ++i) cin >> blockSize[i];
+
+    cout << "Enter number of processes: ";
+    cin >> n;
+    vector<int> processSize(n);
+    cout << "Enter process sizes:\n";
+    for (int i = 0; i < n; ++i) cin >> processSize[i];
+
+    while (true) {
+        cout << "\nChoose allocation method:\n";
+        cout << "1. First Fit\n2. Best Fit\n3. Next Fit\n4. Worst Fit\nEnter your choice: ";
+        cin >> choice;
+
+        switch (choice) {
+            case 1:
+                cout << "\nFirst Fit Allocation:\n";
+                firstFit(blockSize, m, processSize, n);
+                break;
+            case 2:
+                cout << "\nBest Fit Allocation:\n";
+                bestFit(blockSize, m, processSize, n);
+                break;
+            case 3:
+                cout << "\nNext Fit Allocation:\n";
+                nextFit(blockSize, m, processSize, n);
+                break;
+            case 4:
+                cout << "\nWorst Fit Allocation:\n";
+                worstFit(blockSize, m, processSize, n);
+                break;
+            default:
+                cout << "Invalid choice!\n";
+                return 0;
+        }
+    }
+    return 0;
+}
+
+
+
+
+
+
+---------------------------------
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
